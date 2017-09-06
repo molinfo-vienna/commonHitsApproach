@@ -10,9 +10,7 @@ university vienna
 # IMPORTS
 # =============================================================================================
 
-import sys, argparse
 import MDAnalysis
-import glob
 
 def generate_pdbs_from_charmm_input(trajfile, psffile, pdb_output_directory, ligand_3_letter_code):
     print "Generating pdb files from:"

@@ -13,7 +13,7 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # MIT License for more details.
 #
-# You should have received a copy of the MIT License along with pymbar.
+# You should have received a copy of the MIT License along with cha.
 ##############################################################################
 
 """The common hits aproach.
@@ -25,17 +25,5 @@ __maintainer__ = "Marcus Wieder"
 __email__ = "marcus.wieder@univie.ac.at"
 
 from cha import generate_pdbs
-from pymbar.mbar import MBAR
-from pymbar.bar import BAR, BARzero
-from pymbar.exp import EXP, EXPGauss
-import pymbar.old_mbar
-
-try:
-    from pymbar import version
-except:
-    # Fill in information manually.
-    # TODO: See if we can at least get the git revision info in here.
-    version = 'dev'
-    full_version = 'dev'
-    git_revision = 'dev'
-    isrelease = False
+from cha import generate_rpms
+from cha import screen_with_rpms
