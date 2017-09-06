@@ -11,7 +11,7 @@ ftype_names = { Pharm.FeatureType.H_BOND_ACCEPTOR : 'HBA', Pharm.FeatureType.H_B
 
 
 
-class generate_rpms():
+class generate_rpms_factory():
     def __init__(self, map_of_pdbs,  ligand_3_letter_code):
         self.unique_feature_vector = set()
         self.list_of_pdbs = map_of_pdbs # map[mr] = list(pdb1_file_path, pdb2_file_path)
@@ -49,10 +49,10 @@ class generate_rpms():
 
 
 
-        def generate_ph(pdb):
+        def generate_ph(pdb, key):
 
             ifs = Base.FileIOStream(pdb, 'r')
-            tlc = self.ligand_3_letter_codee
+            tlc = self.ligand_3_letter_code
             pdb_reader = Biomol.PDBMoleculeReader(ifs)
             pdb_mol = Chem.BasicMolecule()
 
@@ -159,12 +159,12 @@ class generate_rpms():
 
         ###################################################
 
-        ph_map = self.map_of_pdbs
+        ph_map = {}
 
-        for mr  in sorted(ph_map.keys(), key=natural_sort_key):
+        for mr  in sorted(self.list_of_pdbs.keys(), key=natural_sort_key):
             count = 0
-            pdb_list = ph_map[mr]
-            for pdb in sorted(pdb_list, key=natural_sort_key):
+            pdb_list = self.list_of_pdbs[mr]
+            for pdb in pdb_list:
                 count += 1
 
                 key = str(mr) + '_' + str(count)
@@ -200,10 +200,6 @@ class generate_rpms():
 
 
     def write_ph_for_rpms(self, rpm_maps, output_directory):
-        def natural_sort_key(s, _nsre=re.compile('([0-9]+)')):
-            return [int(text) if text.isdigit() else text.lower()
-                for text in re.split(_nsre, s)]
-
         for fv in rpm_maps:
             directory = output_directory + '/' + str(fv)
             if not os.path.exists(directory):
@@ -211,7 +207,7 @@ class generate_rpms():
             for ph_key in rpm_maps[fv]:
                 ph_to_write =  directory + '/ph_' +str(fv) + '_' + str(ph_key) + '.pml'
                 print '- Writing pharmacophore: ' + str(ph_to_write)
-                Pharm.PMLFeatureContainerWriter(Base.FileIOStream(ph_to_write, 'w')).write(ph_map[ph_key])
+                Pharm.PMLFeatureContainerWriter(Base.FileIOStream(ph_to_write, 'w')).write(rpm_maps[ph_key])
 
 
 

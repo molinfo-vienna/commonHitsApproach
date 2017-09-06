@@ -108,6 +108,8 @@ class Screen():
         return rpm_map
 
     def filter_rpms(rpm_map):
+
+        # here we need to decide on the filtering criteria
         screening_ph = rpm_map
         return screening_ph
 
@@ -131,10 +133,3 @@ class Screen():
                 print line.rstrip()
 
 
-    # if __name__ == '__main__':
-    #     print 'Parse arguments ...'
-    #     args = parse_arguments()
-    #     print 'Reading in RPMs and generate pharmacophores ...'
-    #     rpm_map = read_rpms(args)
-    #     screening_ph = filter_rpms(rpm_map)
-    #     start_screening(screening_ph, args)
