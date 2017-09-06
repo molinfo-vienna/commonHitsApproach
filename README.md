@@ -12,6 +12,7 @@ This software is licensed under the MIT license, a permissive open source licens
 
 cha/ - Package containing code for performing the common hits approach using CHARMM dcd and psf files
 jupyter_notebook/ - An example workflow is described using the provided classes and methods
+scripts/ - A few scripts for repetitive tasks
 
 # Author
 
