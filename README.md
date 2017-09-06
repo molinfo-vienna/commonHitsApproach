@@ -1,6 +1,8 @@
 # Common Hits Approach
 
 Consensus virtual screening using multiple representative pharmacophore models obtained from MD simulations.
+This implementation makes use of the chemoinformatic tool CDPKit - developed by Thomas Seidel - available from
+the aglanger github page (https://github.com/aglanger/CDPKit).
 
 # License
 

@@ -68,21 +68,21 @@ class Screen():
 
 
 
-    def read_in_ph(ph_path, output_dir_path):
-
-        fr = Pharm.PMLPharmacophoreReader(Base.FileIOStream(ph_path))
-        ph = Pharm.BasicPharmacophore()
-        fr.read(ph)
-        ph.pml_path = ph_path
-        ph.dir_path = output_dir_path
-
-        return ph
-
-
     def read_rpms(args):
         def natural_sort_key(s, _nsre=re.compile('([0-9]+)')):
             return [int(text) if text.isdigit() else text.lower()
                 for text in re.split(_nsre, s)]
+
+        def read_in_ph(ph_path, output_dir_path):
+
+            fr = Pharm.PMLPharmacophoreReader(Base.FileIOStream(ph_path))
+            ph = Pharm.BasicPharmacophore()
+            fr.read(ph)
+            ph.pml_path = ph_path
+            ph.dir_path = output_dir_path
+
+            return ph
+
 
         dir_list = glob.glob(str(args.input) + '*/')
         rpm_map = defaultdict(list)
