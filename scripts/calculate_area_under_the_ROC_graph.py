@@ -32,19 +32,17 @@ def calculating_TP_and_FP(molecules, args):
     true_positive_rate_for_every_mol = [0.0]
     false_positive_rate_for_every_mol = [0.0]
     if args.verbose == True:
-        print 'Len of hitlist: ' + str(len(molecules))
+        print( 'Len of hitlist: ' + str(len(molecules)))
     if len(molecules) < 1:
-	    print '0, 0, 0, 0, 0, 0, 0, 0'
-	    sys.exit(1)
-
+	    print( '0, 0, 0, 0, 0, 0, 0, 0')
     else:
         for molecule in sorted(molecules, key=lambda x: x.GetProp('Score'), reverse=True):
             if float(molecule.GetProp('Score').strip()) == float(0.0):
-                print 'Score Zero!'
-                print molecule.GetProp('Score').strip()
+                print( 'Score Zero!')
+                print( molecule.GetProp('Score').strip())
             if molecule.GetProp(args.activity_property_name) == 'active':
                 if args.verbose == True:
-                    print 'Active at position: ' + str(active+decoy) + ' in hitlist ...'
+                    print( 'Active at position: ' + str(active+decoy) + ' in hitlist ...')
                 active += 1
             elif molecule.GetProp(args.activity_property_name) == 'decoy':
                 decoy += 1
@@ -119,17 +117,17 @@ def calculate_auc(true_positive_rate_for_every_mol, false_positive_rate_for_ever
                 break
 
     if args.verbose == True:
-        print 'Calculating AUC values for :'
+        print( 'Calculating AUC values for :')
 	legend = [treshold_list]
 	legend.append('Nr of actives')
 	legend.append('Nr of decoy')
-   	print legend
+   	print( legend)
 
     auc_results = [(np.round(float(x), 2)) for x in auc_results]
     auc_results = [(float(x)) for x in auc_results]
     auc_results.append(args.nb_act)
     auc_results.append(args.nb_dec)
-    print str(auc_results).replace('[', '').replace(']', '')
+    print( str(auc_results).replace('[', '').replace(']', ''))
     return auc_results
 
 if __name__ == '__main__':

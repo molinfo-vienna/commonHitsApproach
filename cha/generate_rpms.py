@@ -56,13 +56,13 @@ class generate_rpms_factory():
             pdb_reader = Biomol.PDBMoleculeReader(ifs)
             pdb_mol = Chem.BasicMolecule()
 
-            print '- Reading input: ', pdb, ' ...'
+            print( '- Reading input: ', pdb, ' ...')
 
             if not pdb_reader.read(pdb_mol):
-                print '!! Could not read input molecule'
+                print( '!! Could not read input molecule')
                 return
 
-            print '- Processing macromolecule', pdb, ' ...'
+            print( '- Processing macromolecule', pdb, ' ...')
 
             i = 0
 
@@ -85,7 +85,7 @@ class generate_rpms_factory():
             Chem.generateHydrogen3DCoordinates(pdb_mol, True)
             ligand = Chem.Fragment()
 
-            print '- Extracting ligand ', tlc, ' ...'
+            print( '- Extracting ligand ', tlc, ' ...')
 
             for atom in pdb_mol.atoms:
                 if Biomol.getResidueCode(atom) == tlc:
@@ -93,7 +93,7 @@ class generate_rpms_factory():
                     break
 
             if ligand.numAtoms == 0:
-                print '!! Could not find ligand', tlc, 'in input file'
+                print( '!! Could not find ligand', tlc, 'in input file')
                 return
 
             Chem.perceiveSSSR(ligand, True)
@@ -102,7 +102,7 @@ class generate_rpms_factory():
 
             Biomol.extractEnvironmentResidues(ligand, pdb_mol, lig_env, 7.0)
             Chem.perceiveSSSR(lig_env, True)
-            print '- Constructing pharmacophore ...'
+            print( '- Constructing pharmacophore ...')
             lig_pharm = Pharm.BasicPharmacophore()
             env_pharm = Pharm.BasicPharmacophore()
             pharm_gen = Pharm.DefaultPharmacophoreGenerator(False)
@@ -169,9 +169,9 @@ class generate_rpms_factory():
 
                 key = str(mr) + '_' + str(count)
                 ph_map[key] = generate_ph(pdb,  key)
-                print '**********************************'
+                print( '**********************************')
 
-        print 'Unique feature vector: ' + str(self.unique_feature_vector)
+        print( 'Unique feature vector: ' + str(self.unique_feature_vector))
         return ph_map
 
 
@@ -194,7 +194,7 @@ class generate_rpms_factory():
                     feature_vector.append(0)
 
             fv = ''.join(str(feature_vector)).replace('[','').replace(']','').replace(',','').replace(' ','')
-            print fv
+            print( fv)
             rpm_map[fv].append(key)
         return rpm_map
 
@@ -206,7 +206,7 @@ class generate_rpms_factory():
                 os.makedirs(directory)
             for ph_key in rpm_maps[fv]:
                 ph_to_write =  directory + '/ph_' +str(fv) + '_' + str(ph_key) + '.pml'
-                print '- Writing pharmacophore: ' + str(ph_to_write)
+                print( '- Writing pharmacophore: ' + str(ph_to_write))
                 Pharm.PMLFeatureContainerWriter(Base.FileIOStream(ph_to_write, 'w')).write(rpm_maps[ph_key])
 
 

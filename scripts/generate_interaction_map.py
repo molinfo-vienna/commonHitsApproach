@@ -25,6 +25,8 @@ import CDPL.Base as Base
 import CDPL.Chem as Chem
 import CDPL.Pharm as Pharm
 import CDPL.Biomol as Biomol
+import CDPL.MolProp as MolProp
+
 import MDAnalysis
 import pandas as pd
 import numpy as np
@@ -35,7 +37,7 @@ import random
 
 rand = random.random()
 
-ftype_names = { Pharm.FeatureType.H_BOND_ACCEPTOR : 'HBA', Pharm.FeatureType.H_BOND_DONOR : 'HBD', Pharm.FeatureType.POS_IONIZABLE : 'PI', Pharm.FeatureType.NEG_IONIZABLE : 'NI', Pharm.FeatureType.AROMATIC : 'AR', Pharm.FeatureType.HYDROPHOBIC : 'H', Pharm.FeatureType.X_VOLUME : 'XV'  }
+ftype_names = { Pharm.FeatureType.H_BOND_ACCEPTOR : 'HBA', Pharm.FeatureType.H_BOND_DONOR : 'HBD', Pharm.FeatureType.POSITIVE_IONIZABLE : 'PI', Pharm.FeatureType.NEGATIVE_IONIZABLE : 'NI', Pharm.FeatureType.AROMATIC : 'AR', Pharm.FeatureType.HYDROPHOBIC : 'H'}#, Pharm.FeatureType.X_VOLUME : 'XV'  }
 
 
 def natural_sort_key(s, _nsre=re.compile('([0-9]+)')):
@@ -88,10 +90,10 @@ def outputInteractions(lig_pharm, env_pharm, interactions, df_constructor):
         elif len(interactions.getValues(lig_ftr)) < 1:
            continue
         ligand_key = generate_key(lig_ftr)
-        print 'Ligand feature : ' + str(ligand_key) + ' interacts with: '
+        print( 'Ligand feature : ' + str(ligand_key) + ' interacts with: ')
 
         env_ftrs = interactions.getValues(lig_ftr)
-        if df_constructor.has_key(ligand_key):
+        if ligand_key in df_constructor:
             dic_of_env_key = df_constructor[ligand_key]
         else:
             dic_of_env_key = {}
@@ -103,7 +105,7 @@ def outputInteractions(lig_pharm, env_pharm, interactions, df_constructor):
             elif ftype_names[Pharm.getType(lig_ftr)] == 'XV':
                continue
             env_key = generate_key(env_ftr)
-            if dic_of_env_key.has_key(env_key):
+            if env_key in dic_of_env_key:
                 dic_of_env_key_at_ts[env_key] = 1
                 dic_of_env_key[env_key] += 1
             else:
@@ -111,7 +113,7 @@ def outputInteractions(lig_pharm, env_pharm, interactions, df_constructor):
                 dic_of_env_key_at_ts[env_key] = 1
 
 
-            print ' - ' + str(env_key)
+            print( ' - ' + str(env_key))
 
         df_constructor[ligand_key] = dic_of_env_key
         interaction_at_ts[ligand_key] = dic_of_env_key_at_ts
@@ -127,20 +129,20 @@ def generate_ph(pdb, args, df_constructor, ts):
     pdb_reader = Biomol.PDBMoleculeReader(ifs)
     pdb_mol = Chem.BasicMolecule()
 
-    print '- Reading input: ', pdb, ' ...'
+    print( '- Reading input: ', pdb, ' ...')
 
     if not pdb_reader.read(pdb_mol):
-        print '!! Could not read input molecule'
+        print( '!! Could not read input molecule')
         return
 
-    print '- Processing macromolecule', pdb, ' ...'
+    print( '- Processing macromolecule', pdb, ' ...')
 
     i = 0
 
     while i < pdb_mol.getNumBonds():
         bond = pdb_mol.getBond(i)
 
-        if Chem.isMetal(bond.atoms[0]) or Chem.isMetal(bond.atoms[1]):
+        if MolProp.isMetal(bond.atoms[0]) or MolProp.isMetal(bond.atoms[1]):
             pdb_mol.removeBond(i)
         else:
             i += 1
@@ -156,11 +158,12 @@ def generate_ph(pdb, args, df_constructor, ts):
     Biomol.setHydrogenResidueSequenceInfo(pdb_mol, False)
     Chem.setRingFlags(pdb_mol, True)
     Chem.setAromaticityFlags(pdb_mol, True)
-    Chem.generateHydrogen3DCoordinates(pdb_mol, True)
+    Chem.calcHydrogen3DCoordinates(pdb_mol, True)
     Chem.calcFormalCharges(pdb_mol, True)
+    Pharm.prepareForPharmacophoreGeneration(pdb_mol)  
     ligand = Chem.Fragment()
 
-    print '- Extracting ligand ', tlc, ' ...'
+    print( '- Extracting ligand ', tlc, ' ...')
 
     for atom in pdb_mol.atoms:
         if Biomol.getResidueCode(atom) == tlc:
@@ -168,7 +171,7 @@ def generate_ph(pdb, args, df_constructor, ts):
             break
 
     if ligand.numAtoms == 0:
-        print '!! Could not find ligand', tlc, 'in input file'
+        print( '!! Could not find ligand', tlc, 'in input file')
         return
 
     Chem.perceiveSSSR(ligand, True)
@@ -177,11 +180,16 @@ def generate_ph(pdb, args, df_constructor, ts):
 
     Biomol.extractEnvironmentResidues(ligand, pdb_mol, lig_env, 7.0)
     Chem.perceiveSSSR(lig_env, True)
-    print '- Constructing pharmacophore ...'
+    print( '- Constructing pharmacophore ...')
+    
+    #### new
     lig_pharm = Pharm.BasicPharmacophore()
     env_pharm = Pharm.BasicPharmacophore()
-    pharm_gen = Pharm.DefaultPharmacophoreGenerator(True)
+    pharm_gen = Pharm.DefaultPharmacophoreGenerator()
+
+    # Pharm.prepareForPharmacophoreGeneration(ligand)
     pharm_gen.generate(ligand, lig_pharm)
+    # Pharm.prepareForPharmacophoreGeneration(lig_env)
     pharm_gen.generate(lig_env, env_pharm)
     #Pharm.FilePMLFeatureContainerWriter('./test/lig_ph_' + str(ts) + '.pml').write(lig_pharm)
 
@@ -193,6 +201,23 @@ def generate_ph(pdb, args, df_constructor, ts):
 
 
     return df_constructor, interaction_at_ts
+    
+    # #### old
+    # lig_pharm = Pharm.BasicPharmacophore()
+    # env_pharm = Pharm.BasicPharmacophore()
+    # pharm_gen = Pharm.DefaultPharmacophoreGenerator(True)
+    # pharm_gen.generate(ligand, lig_pharm)
+    # pharm_gen.generate(lig_env, env_pharm)
+    # #Pharm.FilePMLFeatureContainerWriter('./test/lig_ph_' + str(ts) + '.pml').write(lig_pharm)
+
+    # analyzer = Pharm.DefaultInteractionAnalyzer()
+    # interactions = Pharm.FeatureMapping()
+    # analyzer.analyze(lig_pharm, env_pharm, interactions)
+    # df_constructor, interaction_at_ts = outputInteractions(lig_pharm, env_pharm, interactions, df_constructor)
+	# #Chem.FileSDFMolecularGraphWriter('./test/ligand_' + str(ts) + '.sdf').write(ligand)
+
+
+    # return df_constructor, interaction_at_ts
 
 def plot_frequency_of_features(args, interaction_at_all_ts, set_of_ligand_interaction_partner, set_of_protein_interaction_partner, length, binning):
 
@@ -210,15 +235,15 @@ def plot_frequency_of_features(args, interaction_at_all_ts, set_of_ligand_intera
 
             for protein_interaction in sorted(set_of_protein_interaction_partner):
 
-                if interaction_at_all_ts[ts].has_key(ligand_interaction):
-                    if interaction_at_all_ts[ts][ligand_interaction].has_key(protein_interaction):
+                if ligand_interaction in interaction_at_all_ts[ts]:
+                    if protein_interaction in interaction_at_all_ts[ts][ligand_interaction]:
                         full_interactions[ligand_interaction][protein_interaction][ts]=1
 
     number_of_plots = 1
     for ligand_interaction in sorted(set_of_ligand_interaction_partner):
 
         for protein_interaction in sorted(set_of_protein_interaction_partner):
-            print full_interactions[ligand_interaction][protein_interaction]
+            print( full_interactions[ligand_interaction][protein_interaction])
             check = np.sum(full_interactions[ligand_interaction][protein_interaction])
             if check != 0:
                 number_of_plots += 1
@@ -228,14 +253,14 @@ def plot_frequency_of_features(args, interaction_at_all_ts, set_of_ligand_intera
     axes_list = list(axes_list.tolist())
     for ligand_interaction in sorted(set_of_ligand_interaction_partner):
         for protein_interaction in sorted(set_of_protein_interaction_partner):
-            print full_interactions[ligand_interaction][protein_interaction]
+            print( full_interactions[ligand_interaction][protein_interaction])
             check = np.sum(full_interactions[ligand_interaction][protein_interaction])
             if check != 0:
-                print str(ligand_interaction) + ' - ' + str(protein_interaction) + ': ' + str(check)
+                print( str(ligand_interaction) + ' - ' + str(protein_interaction) + ': ' + str(check))
                 binned_ts_list = []
                 for j in range(0, len(full_interactions[ligand_interaction][protein_interaction]),binning):
                     binned_ts_list.append(full_interactions[ligand_interaction][protein_interaction][j:j+binning:1].sum())
-                print binned_ts_list
+                print( binned_ts_list)
                 specific_axis = axes_list.pop()
                 x= np.linspace(1, len(binned_ts_list),len(binned_ts_list))
                 specific_axis.plot(x,binned_ts_list,  linewidth=2, color='blue')
@@ -253,12 +278,12 @@ def generate_interaction_map(set_of_ligand_interaction_partner, set_of_protein_i
 
 
     container = defaultdict(list)
-    print interaction_at_all_ts
+    print( interaction_at_all_ts)
 
     for ligand_interaction in sorted(set_of_ligand_interaction_partner):
         ano = []
         for protein_interaction in sorted(set_of_protein_interaction_partner):
-            if df_constructor[ligand_interaction].has_key(protein_interaction):
+            if protein_interaction in df_constructor[ligand_interaction]:
                 ano.append(df_constructor[ligand_interaction][protein_interaction])
             else:
                 ano.append(0)
@@ -295,7 +320,7 @@ def generate_interaction_map(set_of_ligand_interaction_partner, set_of_protein_i
     ax.set_yticks(yminor_ticks, minor=True)
     c = ax.imshow(df, interpolation="nearest",origin="lower")
     fig.colorbar(c)
-    pl.grid(b=True, which='minor', color='0.65',linestyle='-')
+    # pl.grid(b=True, which='minor', color='0.65',linestyle='-')
     pl.savefig(args.output_1, format='svg')
 
 
@@ -313,8 +338,8 @@ if __name__ == '__main__':
     interaction_at_all_ts = dict()
 
     for ts in u.trajectory:
-        print '***************************'
-        print str(length)
+        print( '***************************')
+        print( str(length))
         protein_ligand.write('protein_ligand_'+str(rand)+'.pdb')
         df_constructor, interaction_at_ts = generate_ph('./protein_ligand_'+str(rand)+'.pdb', args, df_constructor, length)
         interaction_at_all_ts[length] = interaction_at_ts
