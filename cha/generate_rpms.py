@@ -186,7 +186,7 @@ class generate_rpms_factory():
                 print( '**********************************')
 
         print( 'Unique feature vector: ' + str(self.unique_feature_vector))
-        return ph_map
+        return ph_map,str(self.unique_feature_vector)
 
 
 
