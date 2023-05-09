@@ -1,23 +1,3 @@
-# -*- mode: python; tab-width: 4 -*-
-
-##
-#
-# This program is free software; you can redistribute it and/or
-# modify it under the terms of the GNU Lesser General Public
-# License as published by the Free Software Foundation; either
-# version 2 of the License, or (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
-# Lesser General Public License for more details.
-#
-# You should have received a copy of the GNU Lesser General Public License
-# along with this program; see the file COPYING. If not, write to
-# the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-# Boston, MA 02111-1307, USA.
-##
-
 import sys, re
 import argparse
 import math
@@ -34,8 +14,8 @@ import matplotlib.pylab as pl
 #import seaborn as sbn
 from collections import defaultdict
 import random
-
-rand = random.random()
+sys.path.insert(0,'.' )
+import cha
 
 ftype_names = { Pharm.FeatureType.H_BOND_ACCEPTOR : 'HBA', Pharm.FeatureType.H_BOND_DONOR : 'HBD', Pharm.FeatureType.POSITIVE_IONIZABLE : 'PI', Pharm.FeatureType.NEGATIVE_IONIZABLE : 'NI', Pharm.FeatureType.AROMATIC : 'AR', Pharm.FeatureType.HYDROPHOBIC : 'H'}#, Pharm.FeatureType.X_VOLUME : 'XV'  }
 
@@ -49,8 +29,7 @@ def parse_arguments():
     parser.add_argument('-t', dest="trajectory", required=True, help="input trajectory (dcd) file")
     parser.add_argument('-p', dest="psf", required=True, help="input psf file")
     parser.add_argument('-l', dest="ligand_three_letter_code" ,required=True, help="ligand 3 letter code")
-    parser.add_argument('-oi', dest='output_1', required=True, help='specify filname for interaction map (as svg)')
-    parser.add_argument('-of', dest='output_2', required=True, help='specify filname for interaction map (as svg)')
+    parser.add_argument('-o', dest='output', required=True, help='specify filname for representative pharmacophore models')
     args = parser.parse_args()
     return args
 
@@ -339,26 +318,20 @@ if __name__ == '__main__':
     protein_ligand = u.select_atoms("resname " + str(args.ligand_three_letter_code) + " or protein")
     length = 1
     interaction_at_all_ts = dict()
-
+    pdb_list = list()
     for ts in u.trajectory:
+        rand = random.random()
         print( '***************************')
         print( str(length))
-        protein_ligand.write('protein_ligand_'+str(rand)+'.pdb')
-        df_constructor, interaction_at_ts = generate_ph('./protein_ligand_'+str(rand)+'.pdb', args, df_constructor, length)
-        interaction_at_all_ts[length] = interaction_at_ts
-        # print("set_of_protein_interaction_partner",interaction_at_all_ts)
-        # print("df_constructor",df_constructor)
+        name = './protein_ligand_'+str(rand)+'.pdb'
+        protein_ligand.write(name)
+        pdb_list.append('./'+name)
         length += 1
         if length == 6:
             break
+    map_of_pdbs = {}
+    map_of_pdbs['mr1'] = pdb_list
 
-    set_of_ligand_interaction_partner = set()
-    set_of_protein_interaction_partner = set()
-    for key in df_constructor:
-        set_of_ligand_interaction_partner.add(key)
-        for second_key in df_constructor[key]:
-            set_of_protein_interaction_partner.add(second_key)
-    binning = 100
-    # print("interaction_at_all_ts",interaction_at_all_ts)
-    generate_interaction_map(set_of_ligand_interaction_partner, set_of_protein_interaction_partner, args)
-    plot_frequency_of_features(args, interaction_at_all_ts, set_of_ligand_interaction_partner, set_of_protein_interaction_partner, length, binning)
+    rpms = cha.generate_rpms.generate_rpms_factory(map_of_pdbs, args.ligand_three_letter_code)
+    ph_map = rpms.read_pdb_and_generate_ph()
+    rpms.generate_rpms(ph_map)

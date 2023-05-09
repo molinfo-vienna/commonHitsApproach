@@ -3,11 +3,17 @@ import CDPL.Base as Base
 import CDPL.Chem as Chem
 import CDPL.Pharm as Pharm
 import CDPL.Biomol as Biomol
+import CDPL.MolProp as MolProp
 from collections import defaultdict
 
 
-ftype_names = { Pharm.FeatureType.H_BOND_ACCEPTOR : 'HBA', Pharm.FeatureType.H_BOND_DONOR : 'HBD', Pharm.FeatureType.POS_IONIZABLE : 'PI', Pharm.FeatureType.NEG_IONIZABLE : 'NI', Pharm.FeatureType.AROMATIC : 'AR', Pharm.FeatureType.HYDROPHOBIC : 'H', Pharm.FeatureType.X_VOLUME : 'XV'  }
+# ftype_names = { Pharm.FeatureType.H_BOND_ACCEPTOR : 'HBA', Pharm.FeatureType.H_BOND_DONOR : 'HBD', 
+#                Pharm.FeatureType.POS_IONIZABLE : 'PI', Pharm.FeatureType.NEG_IONIZABLE : 'NI', 
+#                Pharm.FeatureType.AROMATIC : 'AR', Pharm.FeatureType.HYDROPHOBIC : 'H', Pharm.FeatureType.X_VOLUME : 'XV'  }
 
+ftype_names = { Pharm.FeatureType.H_BOND_ACCEPTOR : 'HBA', Pharm.FeatureType.H_BOND_DONOR : 'HBD', 
+               Pharm.FeatureType.POSITIVE_IONIZABLE : 'PI', Pharm.FeatureType.NEGATIVE_IONIZABLE : 'NI', 
+               Pharm.FeatureType.AROMATIC : 'AR', Pharm.FeatureType.HYDROPHOBIC : 'H', Pharm.FeatureType.EXCLUSION_VOLUME : 'XV'  }
 
 
 
@@ -69,7 +75,7 @@ class generate_rpms_factory():
             while i < pdb_mol.getNumBonds():
                 bond = pdb_mol.getBond(i)
 
-                if Chem.isMetal(bond.atoms[0]) or Chem.isMetal(bond.atoms[1]):
+                if MolProp.isMetal(bond.atoms[0]) or MolProp.isMetal(bond.atoms[1]):
                     pdb_mol.removeBond(i)
                 else:
                     i += 1
@@ -82,7 +88,9 @@ class generate_rpms_factory():
             Biomol.setHydrogenResidueSequenceInfo(pdb_mol, False)
             Chem.setRingFlags(pdb_mol, True)
             Chem.setAromaticityFlags(pdb_mol, True)
-            Chem.generateHydrogen3DCoordinates(pdb_mol, True)
+            Chem.calcHydrogen3DCoordinates(pdb_mol, True)
+            Chem.calcFormalCharges(pdb_mol, True)
+            Pharm.prepareForPharmacophoreGeneration(pdb_mol)  
             ligand = Chem.Fragment()
 
             print( '- Extracting ligand ', tlc, ' ...')
@@ -105,9 +113,15 @@ class generate_rpms_factory():
             print( '- Constructing pharmacophore ...')
             lig_pharm = Pharm.BasicPharmacophore()
             env_pharm = Pharm.BasicPharmacophore()
-            pharm_gen = Pharm.DefaultPharmacophoreGenerator(False)
+            ### new
+            #### new
+            pharm_gen = Pharm.DefaultPharmacophoreGenerator()
+
+            # Pharm.prepareForPharmacophoreGeneration(ligand)
             pharm_gen.generate(ligand, lig_pharm)
+            # Pharm.prepareForPharmacophoreGeneration(lig_env)
             pharm_gen.generate(lig_env, env_pharm)
+            ###
             analyzer = Pharm.DefaultInteractionAnalyzer()
             interactions = Pharm.FeatureMapping()
             analyzer.analyze(lig_pharm, env_pharm, interactions)

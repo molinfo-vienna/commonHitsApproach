@@ -9,7 +9,14 @@ import subprocess
 import time
 
 
-ftype_names = { Pharm.FeatureType.H_BOND_ACCEPTOR : 'HBA', Pharm.FeatureType.H_BOND_DONOR : 'HBD', Pharm.FeatureType.POS_IONIZABLE : 'PI', Pharm.FeatureType.NEG_IONIZABLE : 'NI', Pharm.FeatureType.AROMATIC : 'AR', Pharm.FeatureType.HYDROPHOBIC : 'H', Pharm.FeatureType.X_VOLUME : 'XV'  }
+# ftype_names = { Pharm.FeatureType.H_BOND_ACCEPTOR : 'HBA', Pharm.FeatureType.H_BOND_DONOR : 'HBD', 
+#                Pharm.FeatureType.POS_IONIZABLE : 'PI', Pharm.FeatureType.NEG_IONIZABLE : 'NI',
+#                  Pharm.FeatureType.AROMATIC : 'AR', Pharm.FeatureType.HYDROPHOBIC : 'H', Pharm.FeatureType.X_VOLUME : 'XV'  }
+
+ftype_names = { Pharm.FeatureType.H_BOND_ACCEPTOR : 'HBA', Pharm.FeatureType.H_BOND_DONOR : 'HBD', 
+               Pharm.FeatureType.POSITIVE_IONIZABLE : 'PI', Pharm.FeatureType.NEGATIVE_IONIZABLE : 'NI',
+                 Pharm.FeatureType.AROMATIC : 'AR', Pharm.FeatureType.HYDROPHOBIC : 'H'}#, Pharm.FeatureType.X_VOLUME : 'XV'  }
+
 
 
 class Screen():
@@ -52,17 +59,17 @@ class Screen():
                     i += 1
 
                     if i % 100 == 0:
-                        print 'Processed ' + str(i) + ' molecules (' + str(time.clock() - t0), 's elapsed)...'
+                        print( 'Processed ' + str(i) + ' molecules (' + str(time.clock() - t0), 's elapsed)...')
                         t0 = time.clock()
 
                     mol.clear()
 
-                print ''
-                print '-- Summary --'
-                print 'Molecules processed: ' + str(psd_creator.numProcessed)
-                print 'Molecules rejected: ' + str(psd_creator.numRejected)
-                print 'Molecules deleted: ' + str(psd_creator.numDeleted)
-                print 'Molecules inserted: ' + str(psd_creator.numInserted)
+                print( '')
+                print( '-- Summary --')
+                print( 'Molecules processed: ' + str(psd_creator.numProcessed))
+                print( 'Molecules rejected: ' + str(psd_creator.numRejected))
+                print( 'Molecules deleted: ' + str(psd_creator.numDeleted))
+                print( 'Molecules inserted: ' + str(psd_creator.numInserted))
 
                 psd_creator.close()
 
@@ -114,22 +121,22 @@ class Screen():
         return screening_ph
 
     def start_screening(screening_ph, args):
-        print 'Removing old files ...'
+        print( 'Removing old files ...')
         for ph_list in screening_ph.values():
             for ph in ph_list:
-                print 'Submitting ...'
+                print( 'Submitting ...')
                 try:
                     os.remove(str(ph.dir_path) + '/hitlist_' + str(ph.basename) + '.log')
                     os.remove(str(ph.dir_path) + '/hitlist_' + str(ph.basename) + '.sdf')
                 except OSError:
                     pass
 
-                print 'qsub -o ' + str(ph.dir_path) + '/hitlist_' + str(ph.basename) + '.log  -N psd_screen_' + str(ph.basename), '/data/shared/projects/scripts/sge_cdpl_screening.sh', '-q', str(ph.pml_path), '-d', args.database , '-o', str(ph.dir_path) + '/hitlist_' + str(ph.basename) + '.sdf'
+                print( 'qsub -o ' + str(ph.dir_path) + '/hitlist_' + str(ph.basename) + '.log  -N psd_screen_' + str(ph.basename), '/data/shared/projects/scripts/sge_cdpl_screening.sh', '-q', str(ph.pml_path), '-d', args.database , '-o', str(ph.dir_path) + '/hitlist_' + str(ph.basename) + '.sdf')
 
 
                 output = subprocess.Popen(['qsub', '-o', str(ph.dir_path) + '/hitlist_' + str(ph.basename) + '.log',  '-N', 'psd_screen_' + str(ph.basename), '/data/shared/projects/scripts/sge_cdpl_screening.sh', '-q', str(ph.pml_path), '-d', args.database , '-o', str(ph.dir_path) + '/hitlist_' + str(ph.basename) + '.sdf'], stdout=subprocess.PIPE, shell=False)
 
             for line in output.stdout:
-                print line.rstrip()
+                print( line.rstrip())
 
 
