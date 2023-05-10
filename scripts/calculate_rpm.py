@@ -37,8 +37,6 @@ if __name__ == '__main__':
         protein_ligand.write(name)
         pdb_list.append(name)
         length += 1
-        if length == 6:
-            break
     map_of_pdbs = {}
     map_of_pdbs['frame'] = pdb_list
 
