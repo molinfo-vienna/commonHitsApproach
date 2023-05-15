@@ -130,6 +130,7 @@ class generate_rpms_factory():
 
             int_env_ftrs = Pharm.FeatureSet()
             Pharm.getFeatures(int_env_ftrs, interactions, False)
+            int_env_pharm = Pharm.BasicPharmacophore(int_env_ftrs)
             int_core_ftrs = Pharm.FeatureSet()
             Pharm.getFeatures(int_core_ftrs, interactions, True)
             int_pharm = Pharm.BasicPharmacophore(int_core_ftrs)
@@ -140,7 +141,7 @@ class generate_rpms_factory():
                 else:
                     Pharm.setTolerance(ftr, 1.5)
 
-            Pharm.createExclusionVolumes(int_pharm, int_env_ftrs, 0.0, 0.1, False)
+            # Pharm.createExclusionVolumes(int_pharm, int_env_ftrs, 0.0, 0.1, False)
             int_env_ftr_atoms = Chem.Fragment()
             Pharm.getFeatureAtoms(int_env_ftrs, int_env_ftr_atoms)
             int_residue_atoms = Chem.Fragment()
@@ -151,20 +152,22 @@ class generate_rpms_factory():
                 return Biomol.getResidueAtomName(atom) == 'CA'
 
             Chem.removeAtomsIfNot(int_residue_atoms, isAlphaAtom)
-            Pharm.createExclusionVolumes(int_pharm, int_residue_atoms, Chem.Atom3DCoordinatesFunctor(), 1.0, 2.0, False)
+            # Pharm.createExclusionVolumes(int_pharm, int_residue_atoms, Chem.Atom3DCoordinatesFunctor(), 1.0, 2.0, False)
 
             features_in_ph = []
-            for int_ftr in int_pharm:
-                if Pharm.hasSubstructure(int_ftr) == False:
-                       continue
-                elif ftype_names[Pharm.getType(int_ftr)] == 'XV':
-                       continue
-                feature_id = generate_key(int_ftr)
-                features_in_ph.append(str(feature_id))
-                self.unique_feature_vector.add(str(feature_id))
+            for lig_ftr in lig_pharm:
+                env_ftrs = interactions.getValues(lig_ftr)
+                for int_ftr in env_ftrs:
+                    # if Pharm.hasSubstructure(int_ftr) == False:
+                    #        continue
+                    # if ftype_names[Pharm.getType(int_ftr)] == 'XV':
+                    #        continue
+                    feature_id = generate_key(int_ftr)
+                    features_in_ph.append(str(feature_id))
+                    self.unique_feature_vector.add(str(feature_id))
 
-            int_pharm.fv = features_in_ph
-            int_pharm.path_to_pdb = pdb
+                int_pharm.fv = features_in_ph
+                int_pharm.path_to_pdb = pdb
 
             return int_pharm
 

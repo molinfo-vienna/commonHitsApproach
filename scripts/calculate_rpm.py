@@ -42,6 +42,8 @@ if __name__ == '__main__':
 
     rpms = cha.generate_rpms.generate_rpms_factory(map_of_pdbs, args.ligand_three_letter_code)
     ph_map,unique_str = rpms.read_pdb_and_generate_ph()
+    print("ph_map",ph_map)
+    print("unique_str",unique_str)
     rpm_map = rpms.generate_rpms(ph_map)
     df = pd.DataFrame(rpm_map.items())
     print("df",df)
